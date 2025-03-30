@@ -2,7 +2,7 @@ import Content from './accordion-content.svelte';
 import Header from './accordion-header.svelte';
 import Item from './accordion-item.svelte';
 import Trigger from './accordion-trigger.svelte';
-import Root from './accordion.svelte';
+import Root, { type AccordionRootProps } from './accordion.svelte';
 
 export {
 	Root as Accordion,
@@ -14,5 +14,7 @@ export {
 	Header,
 	Item,
 	Root,
-	Trigger
+	Trigger,
+	type AccordionRootProps,
+	type AccordionRootProps as RootProps,
 };
