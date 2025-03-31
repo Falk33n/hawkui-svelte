@@ -1,9 +1,5 @@
 import type { Snippet } from 'svelte';
 
-//
-// TYPES FOR COMPONENT PROPS
-//
-
 export type WithElementRef<Props, Ref extends HTMLElement = HTMLElement> = Props & {
 	/**
 	 * The underlying DOM element being rendered. You can bind to this to get a
@@ -33,13 +29,10 @@ export type WithoutChild<Props> = Omit<Props, 'child'>;
 
 export type WithChildrenAndChild<
 	Props,
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	ChildProps extends Record<string, unknown> = {},
 > = WithChildren<Props & WithChild<ChildProps>>;
 
 export type WithoutChildrenAndChild<Props> = Omit<Props, 'children' | 'child'>;
 
-//
-// TYPES FOR COMPONENT CONTEXT
-//
-
-export type Reactive<T> = { current: T };
+export type HeadingLevels = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
