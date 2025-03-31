@@ -2,11 +2,11 @@
 	lang="ts"
 	module
 >
-	import type { WithChild, WithElementRef } from '$lib/types';
+	import type { Reactive, WithChild, WithElementRef } from '$lib/types';
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	type AccordionRootBaseAttributes = WithElementRef<
-		WithChild<Omit<HTMLAttributes<HTMLDivElement>, 'dir'>>,
+		WithChild<HTMLAttributes<HTMLDivElement>>,
 		HTMLDivElement
 	>;
 
@@ -16,19 +16,6 @@
 		 * @defaultValue `false`
 		 */
 		disabled?: boolean;
-
-		/**
-		 * The reading direction of the accordion when applicable.
-		 * If omitted, assumes LTR (left-to-right) reading mode.
-		 * @defaultValue `"ltr"`
-		 */
-		dir?: 'ltr' | 'rtl';
-
-		/**
-		 * The orientation of the accordion.
-		 * @defaultValue `"vertical"`
-		 */
-		orientation?: 'vertical' | 'horizontal';
 	};
 
 	type AccordionRootTypeSingle = AccordionRootBaseProps & {
@@ -44,7 +31,7 @@
 		 *
 		 * If `type` is `"single"`, this should be a string.
 		 *
-		 * If type is `"multiple"`, this should be an array of strings.
+		 * If `type` is `"multiple"`, this should be an array of strings.
 		 */
 		value?: string;
 
@@ -60,15 +47,15 @@
 		/**
 		 * A callback function called when the active accordion item value changes.
 		 *
-		 * If the type is `"single"`, the argument will be a string.
+		 * If `type` is `"single"`, the argument will be a string.
 		 *
-		 * If type is `"multiple"`, the argument will be an array of strings.
+		 * If `type` is `"multiple"`, the argument will be an array of strings.
 		 */
 		onValueChange?: (value: string) => void;
 
 		/**
 		 * When `type` is `"single"`, allows closing content when clicking the trigger for an open item.
-		 * @defaultValue `false`
+		 * @defaultValue `true`
 		 */
 		collapsible?: boolean;
 	};
@@ -86,7 +73,7 @@
 		 *
 		 * If `type` is `"single"`, this should be a string.
 		 *
-		 * If type is `"multiple"`, this should be an array of strings.
+		 * If `type` is `"multiple"`, this should be an array of strings.
 		 */
 		value?: string[];
 
@@ -102,15 +89,15 @@
 		/**
 		 * A callback function called when the active accordion item value changes.
 		 *
-		 * If the type is `"single"`, the argument will be a string.
+		 * If `type` is `"single"`, the argument will be a string.
 		 *
-		 * If type is `"multiple"`, the argument will be an array of strings.
+		 * If `type` is `"multiple"`, the argument will be an array of strings.
 		 */
 		onValueChange?: (value: string[]) => void;
 
 		/**
 		 * When `type` is `"single"`, allows closing content when clicking the trigger for an open item.
-		 * @defaultValue `false`
+		 * @defaultValue `true`
 		 */
 		collapsible?: never;
 	};
@@ -121,21 +108,19 @@
 
 <script lang="ts">
 	import { cn } from '$lib/utils';
-	import { useAccordionRoot } from './context.svelte';
+	import { useAccordionRoot, type AccordionRootContext } from './context';
 
 	let {
 		ref = $bindable(null),
-		value = $bindable(),
+		value = $bindable(''),
 		children,
 		child,
-		class: className,
-		defaultValue,
-		type,
 		onValueChange,
+		class: className,
+		type,
 		collapsible,
 		disabled = false,
-		orientation = 'vertical',
-		dir = 'ltr',
+		defaultValue = '',
 		...restProps
 	}: AccordionRootProps = $props();
 
@@ -159,26 +144,30 @@
 				? defaultValue
 				: '';
 
-	collapsible = type === 'single' ? (collapsible ?? false) : undefined;
+	collapsible = type === 'single' ? (collapsible ?? true) : undefined;
 
-	let rootValue = $state({ current: value });
+	let rootValue = $state<Reactive<string | string[]>>({ current: value });
 
-	const rootProps = $derived({
-		'class': cn('w-full', className),
-		'data-orientation': orientation === 'horizontal' ? orientation : undefined,
-		'data-disabled': disabled === true || undefined,
+	const rootProps = $derived<HTMLAttributes<HTMLDivElement>>({
+		'class': cn(
+			'group w-full border-t transition-opacity duration-200',
+			'data-[disabled-root=true]:pointer-events-none data-[disabled-root=true]:opacity-70',
+			className,
+		),
+		'data-disabled-root': disabled || undefined,
 		...restProps,
 	});
 
+	// We cast the type since TypeScript can't compute the change of values
+	// we have done in realtime.
 	useAccordionRoot({
-		rootType: type,
-		rootOrientation: orientation,
 		rootDisabled: disabled,
-		rootValue: rootValue,
+		rootType: type,
+		rootValue,
 		rootDefaultValue: defaultValue,
 		rootCollapsible: collapsible,
 		rootOnValueChange: onValueChange,
-	});
+	} as AccordionRootContext);
 </script>
 
 {#if child}

@@ -2,21 +2,20 @@
 	lang="ts"
 	module
 >
-	import type { WithChild, WithElementRef } from '$lib/types';
+	import type { Reactive, WithChild, WithElementRef } from '$lib/types';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	type AccordionRootBaseAttributes = WithElementRef<
+	type AccordionItemBaseAttributes = WithElementRef<
 		WithChild<HTMLAttributes<HTMLDivElement>>,
 		HTMLDivElement
 	>;
 
-	type AccordionRootBaseProps = {
+	type AccordionItemBaseProps = {
 		/**
 		 * The unique value of the accordion item. This is used to identify when the
-		 * item is open or closed.
-		 * @required
+		 * item is open or closed. If left undefined it will be generated automatically.
 		 */
-		value: string;
+		value?: string;
 
 		/**
 		 * Whether or not the accordion item is disabled. When disabled,
@@ -26,30 +25,66 @@
 		disabled?: boolean;
 	};
 
-	export type AccordionItemProps = AccordionRootBaseAttributes & AccordionRootBaseProps;
+	export type AccordionItemProps = AccordionItemBaseAttributes & AccordionItemBaseProps;
 </script>
 
 <script lang="ts">
-	import { cn } from '$lib/utils';
+	import { cn, createId } from '$lib/utils';
+	import { useAccordionItem } from './context';
 
 	let {
 		ref = $bindable(null),
 		children,
 		child,
 		class: className,
-		value,
+		value = createId(),
 		disabled = false,
 		...restProps
 	}: AccordionItemProps = $props();
 
-	let itemState = $state<'open' | 'closed'>('closed');
+	let itemState = $state<Reactive<'open' | 'closed'>>({
+		current: 'closed',
+	});
 
-	const itemProps = $derived({
-		'class': cn('border-b', className),
-		'data-orientation': orientation === 'horizontal' ? orientation : undefined,
-		'data-disabled': disabled === true || undefined,
-		'data-state': itemState,
+	const { rootValue, rootDefaultValue, rootOnValueChange } = useAccordionItem({
+		itemDisabled: disabled,
+		itemValue: value,
+		itemState,
+		triggerId: createId(),
+		contentId: createId(),
+	});
+
+	const itemProps = $derived<HTMLAttributes<HTMLDivElement>>({
+		'class': cn(
+			'group border-b transition-opacity duration-200',
+			'data-[disabled-item=true]:pointer-events-none data-[disabled-item=true]:opacity-70',
+			'group-data-[disabled-root=true]:pointer-events-none group-data-[disabled-root=true]:opacity-70',
+			className,
+		),
+		'data-disabled-item': disabled || undefined,
+		'data-state': itemState.current,
 		...restProps,
+	});
+
+	let hasMounted = false;
+
+	$effect(() => {
+		const isValueSameAsRootDefaultValue =
+			value === rootDefaultValue || rootDefaultValue.includes(value);
+
+		const isValueSameAsRootValue =
+			value === rootValue.current || rootValue.current.includes(value);
+
+		// Default value should only be relevant on the initial render.
+		itemState.current =
+			(!hasMounted && isValueSameAsRootDefaultValue) || isValueSameAsRootValue
+				? 'open'
+				: 'closed';
+
+		if (!hasMounted) hasMounted = true;
+
+		// TypeScript can't infer the single or multiple types.
+		rootOnValueChange?.(itemState.current as any);
 	});
 </script>
 
