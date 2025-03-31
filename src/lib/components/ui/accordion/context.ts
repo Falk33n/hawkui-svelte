@@ -113,7 +113,7 @@ export function useAccordionRoot(props: AccordionRootContext) {
 
 const ITEM_CONTEXT_KEY = 'hawk-accordion-item-key';
 
-type AccordionItemContext = {
+type AccordionItemContextInput = {
 	/**
 	 * The unique value of the accordion item. This is used to identify when the
 	 * item is open or closed.
@@ -143,9 +143,9 @@ type AccordionItemContext = {
 	contentId: string;
 };
 
-type AccordionItemContextReturn = AccordionRootContext & AccordionItemContext;
+type AccordionItemContext = AccordionRootContext & AccordionItemContextInput;
 
-export function useAccordionItem(props: AccordionItemContext) {
+export function useAccordionItem(props: AccordionItemContextInput) {
 	if (!hasContext(ROOT_CONTEXT_KEY)) {
 		throw new Error(
 			'Context not found: This component is not an child of the Accordion.Root component.',
@@ -154,7 +154,7 @@ export function useAccordionItem(props: AccordionItemContext) {
 
 	const rootContext = getContext<AccordionRootContext>(ROOT_CONTEXT_KEY);
 
-	return setContext<AccordionItemContextReturn>(ITEM_CONTEXT_KEY, { ...rootContext, ...props });
+	return setContext<AccordionItemContext>(ITEM_CONTEXT_KEY, { ...rootContext, ...props });
 }
 
 //
@@ -172,7 +172,7 @@ export function useAccordionTrigger() {
 		);
 	}
 
-	return getContext<AccordionItemContextReturn>(ITEM_CONTEXT_KEY);
+	return getContext<AccordionItemContext>(ITEM_CONTEXT_KEY);
 }
 
 //
