@@ -112,6 +112,7 @@
 
 			<ChevronDownIcon
 				class="text-muted-foreground size-4 shrink-0 transition-transform duration-200"
+				aria-hidden
 			/>
 		</button>
 	{/if}
