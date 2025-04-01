@@ -1,5 +1,7 @@
 import type {
 	HeadingLevels,
+	PickAndNever,
+	PickAndRequire,
 	WithChild,
 	WithChildren,
 	WithChildrenAndChild,
@@ -9,12 +11,15 @@ import type {
 	WithoutChildrenAndChild,
 	WithoutElementRef,
 } from './components';
-import type { Reactive } from './context';
+import type { AsReactive, Reactive } from './context';
 import type { ButtonMouseEvent } from './events';
 
 export type {
+	AsReactive,
 	ButtonMouseEvent,
 	HeadingLevels,
+	PickAndNever,
+	PickAndRequire,
 	Reactive,
 	WithChild,
 	WithChildren,

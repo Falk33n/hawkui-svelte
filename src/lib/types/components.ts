@@ -35,4 +35,10 @@ export type WithChildrenAndChild<
 
 export type WithoutChildrenAndChild<Props> = Omit<Props, 'children' | 'child'>;
 
+export type PickAndRequire<T, K extends keyof T> = Required<Pick<T, K>>;
+
+export type PickAndNever<T, K extends keyof T> = {
+	[P in K]: never;
+};
+
 export type HeadingLevels = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
