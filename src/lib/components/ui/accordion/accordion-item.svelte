@@ -42,22 +42,18 @@
 		...restProps
 	}: AccordionItemProps = $props();
 
-	const { rootValue, rootOnValueChange, isItemOpen } = useAccordionItem({
-		isItemDisabled: disabled,
+	const { rootValue, rootDisabled, onRootValueChange, itemOpen } = useAccordionItem({
+		itemDisabled: disabled,
 		itemValue: value,
-		triggerId: createId(),
-		contentId: createId(),
 	});
 
 	const itemProps = $derived<HTMLAttributes<HTMLDivElement>>({
 		'class': cn(
 			'group border-b transition-opacity duration-200',
-			'data-[disabled-item=true]:pointer-events-none data-[disabled-item=true]:opacity-70',
-			'group-data-[disabled-root=true]:pointer-events-none group-data-[disabled-root=true]:opacity-70',
+			disabled && 'pointer-events-none opacity-70',
 			className,
 		),
-		'data-disabled-item': disabled || undefined,
-		'data-open': isItemOpen.current,
+		'aria-disabled': rootDisabled || disabled || undefined,
 		...restProps,
 	});
 
@@ -65,10 +61,10 @@
 		const isValueSameAsRootValue =
 			value === rootValue.current || rootValue.current.includes(value);
 
-		isItemOpen.current = isValueSameAsRootValue;
+		itemOpen.current = isValueSameAsRootValue;
 
 		// TypeScript can't infer the single or multiple types.
-		rootOnValueChange?.(rootValue.current as any);
+		onRootValueChange?.(rootValue.current as any);
 	});
 </script>
 

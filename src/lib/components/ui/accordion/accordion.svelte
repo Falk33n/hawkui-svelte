@@ -149,23 +149,27 @@
 	const rootProps = $derived<HTMLAttributes<HTMLDivElement>>({
 		'class': cn(
 			'group w-full border-t transition-opacity duration-200',
-			'data-[disabled-root=true]:pointer-events-none data-[disabled-root=true]:opacity-70',
+			disabled && 'pointer-events-none opacity-70',
 			className,
 		),
-		'data-disabled-root': disabled || undefined,
+		'aria-disabled': disabled || undefined,
 		...restProps,
 	});
 
 	// We cast the type since TypeScript can't compute the change of values
 	// we have done in realtime.
-	useAccordionRoot({
-		isCollapsible: collapsible,
-		isRootDisabled: disabled,
-		rootType: type,
+	const { rootValue } = useAccordionRoot({
+		collapsible,
+		rootDisabled: disabled,
 		rootValue: value,
 		rootDefaultValue: defaultValue,
-		rootOnValueChange: onValueChange,
+		onRootValueChange: onValueChange,
 	} as AccordionRootContextInput);
+
+	$effect(() => {
+		// To make sure that people using the binding will have the correct value.
+		value = rootValue.current;
+	});
 </script>
 
 {#if child}

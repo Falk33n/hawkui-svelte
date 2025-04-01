@@ -40,23 +40,23 @@
 	const {
 		isRootTypeMultiple,
 		rootValue,
-		isRootDisabled,
-		isItemDisabled,
+		rootDisabled,
+		itemDisabled,
 		itemValue,
-		isItemOpen,
+		itemOpen,
 		triggerId,
 		contentId,
-		isCollapsible,
+		collapsible,
 	} = useAccordionTrigger();
 
 	function handleOnValueChange() {
 		if (!isRootTypeMultiple) {
-			if (!isItemOpen.current) {
+			if (!itemOpen.current) {
 				rootValue.current = itemValue;
 				return;
 			}
 
-			if (isCollapsible) {
+			if (collapsible) {
 				rootValue.current = '';
 			}
 
@@ -64,7 +64,7 @@
 		}
 
 		if (Array.isArray(rootValue.current)) {
-			if (!isItemOpen.current) {
+			if (!itemOpen.current) {
 				rootValue.current.push(itemValue);
 				return;
 			}
@@ -86,14 +86,12 @@
 		'class': cn(
 			'flex flex-1 cursor-pointer items-center justify-between p-4 text-sm font-medium transition-all transition-opacity duration-200',
 			'hover:underline hover:underline-offset-4',
-			'group-data-[open=true]:[&>svg]:-rotate-180',
-			'group-data-[disabled-item=true]:pointer-events-none group-data-[disabled-item=true]:opacity-70',
-			'group-data-[disabled-root=true]:pointer-events-none group-data-[disabled-root=true]:opacity-70',
+			itemOpen.current && '[&>svg]:-rotate-180',
 			disabled && 'pointer-events-none opacity-70',
 			className,
 		),
-		'disabled': isRootDisabled || isItemDisabled || disabled || undefined,
-		'aria-expanded': isItemOpen.current,
+		'disabled': rootDisabled || itemDisabled || disabled || undefined,
+		'aria-expanded': itemOpen.current,
 		'aria-controls': contentId,
 		'id': triggerId,
 		'type': 'button',

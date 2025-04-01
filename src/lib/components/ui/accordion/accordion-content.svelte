@@ -36,11 +36,12 @@
 		...restProps
 	}: AccordionContentProps = $props();
 
-	const { isItemOpen, triggerId, contentId } = useAccordionContent();
+	const { rootDisabled, itemDisabled, itemOpen, triggerId, contentId } = useAccordionContent();
 
 	const contentProps = $derived<HTMLAttributes<HTMLDivElement>>({
 		'class': cn('overflow-hidden text-sm', className),
-		'hidden': forceMount ? undefined : !isItemOpen.current,
+		'hidden': forceMount ? undefined : !itemOpen.current,
+		'aria-disabled': rootDisabled || itemDisabled || undefined,
 		'aria-labelledby': triggerId,
 		'id': contentId,
 		'role': 'region',
@@ -62,14 +63,14 @@
 
 			// Since hidden is set directly when itemState = 'closed' we need
 			// to revert it back to false.
-			if (!isItemOpen.current) {
+			if (!itemOpen.current) {
 				ref.hidden = false;
 			}
 
-			ref.classList.toggle('animate-accordion-open', isItemOpen.current);
-			ref.classList.toggle('animate-accordion-close', !isItemOpen.current);
+			ref.classList.toggle('animate-accordion-open', itemOpen.current);
+			ref.classList.toggle('animate-accordion-close', !itemOpen.current);
 
-			if (!isItemOpen.current) {
+			if (!itemOpen.current) {
 				// To make the animation have enough time to finish.
 				const delaySetHidden = setTimeout(() => {
 					if (!ref) return;
@@ -83,7 +84,7 @@
 		let hasSetStyleVariables = false;
 
 		$effect(() => {
-			if (!hasSetStyleVariables && isItemOpen.current) {
+			if (!hasSetStyleVariables && itemOpen.current) {
 				setStyleVariables();
 				hasSetStyleVariables = true;
 			}

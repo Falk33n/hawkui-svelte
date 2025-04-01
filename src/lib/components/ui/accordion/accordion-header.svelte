@@ -23,6 +23,7 @@
 
 <script lang="ts">
 	import { cn } from '$lib/utils';
+	import { useAccordionHeader } from './context.svelte';
 
 	let {
 		ref = $bindable(null),
@@ -33,8 +34,11 @@
 		...restProps
 	}: AccordionHeaderProps = $props();
 
+	const { rootDisabled, itemDisabled, itemOpen } = useAccordionHeader();
+
 	const headerProps = $derived<HTMLAttributes<HTMLHeadingElement>>({
-		class: cn('flex', 'group-data-[open=true]:border-b', className),
+		'class': cn('flex', itemOpen.current && 'border-b', className),
+		'aria-disabled': rootDisabled || itemDisabled || undefined,
 		...restProps,
 	});
 </script>
