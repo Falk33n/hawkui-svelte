@@ -12,19 +12,18 @@
 	 * @property `"variant"` The color styles of the alert component.
 	 * @defaultValue `"info"`
 	 */
-	const alertVariants = tv({
+	export const alertVariants = tv({
 		base: cn(
-			'bg-card relative grid w-full grid-cols-[0_1fr] items-start gap-y-0.5 rounded-lg border px-4 py-3 text-sm',
-			'has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-[>svg]:gap-x-3',
-			'[&>svg]:size-4 [&>svg]:translate-y-0.5 [&>svg]:text-current',
+			'relative w-full rounded-lg border px-4 py-3 text-sm',
+			'[&>svg]:absolute [&>svg]:top-4 [&>svg]:left-4 [&>svg]:size-4 [&>svg~*]:pl-7',
+			'[&>svg+div]:translate-y-[-3px]',
 		),
 		variants: {
 			variant: {
-				info: 'text-card-foreground',
+				info: 'bg-background text-card-foreground [&>svg]:text-foreground',
 				destructive: cn(
-					'text-destructive',
-					'*:data-[slot=alert-description]:text-destructive/90',
-					'[&>svg]:text-current',
+					'text-destructive-foreground bg-destructive',
+					'[&>svg]:text-destructive-foreground',
 				),
 			},
 		},
@@ -50,3 +49,38 @@
 
 	export type AlertRootProps = AlertRootBaseAttributes & AlertRootBaseProps;
 </script>
+
+<script lang="ts">
+	import CircleAlertIcon from '@lucide/svelte/icons/circle-alert';
+	import TerminalIcon from '@lucide/svelte/icons/terminal';
+
+	let {
+		ref = $bindable(null),
+		children,
+		child,
+		class: className,
+		variant = 'info',
+		...restProps
+	}: AlertRootProps = $props();
+
+	const rootProps = $derived({
+		class: cn(alertVariants({ variant }), className),
+		role: 'alert',
+		...restProps,
+	});
+
+	const Icon = $derived(variant === 'info' ? TerminalIcon : CircleAlertIcon);
+</script>
+
+{#if child}
+	{@render child({ props: { ref, ...rootProps } })}
+{:else}
+	<div
+		bind:this={ref}
+		{...rootProps}
+	>
+		<Icon aria-hidden />
+
+		{@render children?.()}
+	</div>
+{/if}
