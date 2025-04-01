@@ -2,7 +2,7 @@
 	lang="ts"
 	module
 >
-	import type { Reactive, WithChild, WithElementRef } from '$lib/types';
+	import type { WithChild, WithElementRef } from '$lib/types';
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	type AccordionRootBaseAttributes = WithElementRef<
@@ -108,7 +108,7 @@
 
 <script lang="ts">
 	import { cn } from '$lib/utils';
-	import { useAccordionRoot, type AccordionRootContext } from './context';
+	import { useAccordionRoot, type AccordionRootContextInput } from './context.svelte';
 
 	let {
 		ref = $bindable(null),
@@ -146,8 +146,6 @@
 
 	collapsible = type === 'single' ? (collapsible ?? true) : undefined;
 
-	let rootValue = $state<Reactive<string | string[]>>({ current: value });
-
 	const rootProps = $derived<HTMLAttributes<HTMLDivElement>>({
 		'class': cn(
 			'group w-full border-t transition-opacity duration-200',
@@ -161,13 +159,13 @@
 	// We cast the type since TypeScript can't compute the change of values
 	// we have done in realtime.
 	useAccordionRoot({
-		rootDisabled: disabled,
+		isCollapsible: collapsible,
+		isRootDisabled: disabled,
 		rootType: type,
-		rootValue,
+		rootValue: value,
 		rootDefaultValue: defaultValue,
-		rootCollapsible: collapsible,
 		rootOnValueChange: onValueChange,
-	} as AccordionRootContext);
+	} as AccordionRootContextInput);
 </script>
 
 {#if child}

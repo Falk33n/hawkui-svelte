@@ -24,7 +24,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-	import { useAccordionTrigger } from './context';
+	import { useAccordionTrigger } from './context.svelte';
 
 	let {
 		ref = $bindable(null),
@@ -38,40 +38,42 @@
 	}: AccordionTriggerProps = $props();
 
 	const {
-		rootType,
+		isRootTypeMultiple,
 		rootValue,
-		rootDisabled,
-		rootCollapsible,
-		itemDisabled,
+		isRootDisabled,
+		isItemDisabled,
 		itemValue,
-		itemState,
+		isItemOpen,
 		triggerId,
 		contentId,
+		isCollapsible,
 	} = useAccordionTrigger();
 
 	function handleOnValueChange() {
-		if (rootType === 'single') {
-			if (itemState.current === 'closed') {
+		if (!isRootTypeMultiple) {
+			if (!isItemOpen.current) {
 				rootValue.current = itemValue;
 				return;
 			}
 
-			if (rootCollapsible) {
+			if (isCollapsible) {
 				rootValue.current = '';
 			}
 
 			return;
 		}
 
-		if (itemState.current === 'closed') {
-			rootValue.current.push(itemValue);
-			return;
-		}
+		if (Array.isArray(rootValue.current)) {
+			if (!isItemOpen.current) {
+				rootValue.current.push(itemValue);
+				return;
+			}
 
-		const itemIndex = rootValue.current.findIndex((item) => item === itemValue);
+			const itemIndex = rootValue.current.findIndex((item) => item === itemValue);
 
-		if (itemIndex !== -1) {
-			rootValue.current.splice(itemIndex, 1);
+			if (itemIndex !== -1) {
+				rootValue.current.splice(itemIndex, 1);
+			}
 		}
 	}
 
@@ -84,14 +86,14 @@
 		'class': cn(
 			'flex flex-1 cursor-pointer items-center justify-between p-4 text-sm font-medium transition-all transition-opacity duration-200',
 			'hover:underline hover:underline-offset-4',
-			'group-data-[state=open]:[&>svg]:-rotate-180',
+			'group-data-[open=true]:[&>svg]:-rotate-180',
 			'group-data-[disabled-item=true]:pointer-events-none group-data-[disabled-item=true]:opacity-70',
 			'group-data-[disabled-root=true]:pointer-events-none group-data-[disabled-root=true]:opacity-70',
 			disabled && 'pointer-events-none opacity-70',
 			className,
 		),
-		'disabled': rootDisabled || itemDisabled || disabled || undefined,
-		'aria-expanded': itemState.current === 'open',
+		'disabled': isRootDisabled || isItemDisabled || disabled || undefined,
+		'aria-expanded': isItemOpen.current,
 		'aria-controls': contentId,
 		'id': triggerId,
 		'type': 'button',
@@ -111,7 +113,7 @@
 			{@render children?.()}
 
 			<ChevronDownIcon
-				class="text-muted-foreground size-4 shrink-0 transition-transform duration-200"
+				class="size-4 text-muted-foreground transition-transform duration-200 shrink-0"
 				aria-hidden
 			/>
 		</button>

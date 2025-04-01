@@ -1,11 +1,12 @@
 import type { Reactive } from '$lib/types';
 import { getContext, hasContext, setContext } from 'svelte';
 
-//
-// ROOT CONTEXT
-//
+const ROOT_CONTEXT_KEY = Symbol('hawk-accordion-root-key');
+const ITEM_CONTEXT_KEY = Symbol('hawk-accordion-item-key');
 
-const ROOT_CONTEXT_KEY = 'hawk-accordion-root-key';
+//
+// TYPES FOR ROOT CONTEXT
+//
 
 type AccordionRootBaseContext = {
 	/**
@@ -13,25 +14,18 @@ type AccordionRootBaseContext = {
 	 * cannot be interacted with.
 	 * @defaultValue `false`
 	 */
-	rootDisabled: boolean;
+	isRootDisabled: boolean;
 };
 
-type AccordionRootTypeSingleContext = {
+type AccordionRootTypeSingleContext = AccordionRootBaseContext & {
 	/**
-	 * Determines whether one or multiple items can be opened at the same time.
-	 *
-	 * @required
-	 */
-	rootType: 'single';
-
-	/**
-	 * The reactive value of the currently active accordion item.
+	 * The value of the currently active accordion item.
 	 *
 	 * If `type` is `"single"`, this should be a string.
 	 *
 	 * If `type` is `"multiple"`, this should be an array of strings.
 	 */
-	rootValue: Reactive<string>;
+	rootValue: string;
 
 	/**
 	 * The default value of the accordion item to expand when initially rendered.
@@ -55,25 +49,18 @@ type AccordionRootTypeSingleContext = {
 	 * When `type` is `"single"`, allows closing content when clicking the trigger for an open item.
 	 * @defaultValue `true`
 	 */
-	rootCollapsible: boolean;
+	isCollapsible: boolean;
 };
 
-type AccordionRootTypeMultipleContext = {
+type AccordionRootTypeMultipleContext = AccordionRootBaseContext & {
 	/**
-	 * Determines whether one or multiple items can be opened at the same time.
-	 *
-	 * @required
-	 */
-	rootType: 'multiple';
-
-	/**
-	 * The reactive value of the currently active accordion item.
+	 * The value of the currently active accordion item.
 	 *
 	 * If `type` is `"single"`, this should be a string.
 	 *
 	 * If `type` is `"multiple"`, this should be an array of strings.
 	 */
-	rootValue: Reactive<string[]>;
+	rootValue: string[];
 
 	/**
 	 * The default value of the accordion item to expand when initially rendered.
@@ -97,21 +84,30 @@ type AccordionRootTypeMultipleContext = {
 	 * When `type` is `"single"`, allows closing content when clicking the trigger for an open item.
 	 * @defaultValue `true`
 	 */
-	rootCollapsible?: never;
+	isCollapsible?: never;
 };
 
-export type AccordionRootContext = AccordionRootBaseContext &
-	(AccordionRootTypeSingleContext | AccordionRootTypeMultipleContext);
+export type AccordionRootContextInput =
+	| AccordionRootTypeSingleContext
+	| AccordionRootTypeMultipleContext;
 
-export function useAccordionRoot(props: AccordionRootContext) {
-	return setContext(ROOT_CONTEXT_KEY, props);
-}
+type AccordionRootContextOutput = Omit<AccordionRootContextInput, 'rootValue'> & {
+	/**
+	 * The reactive value of the currently active accordion item.
+	 *
+	 * If `type` is `"single"`, this should be a string.
+	 *
+	 * If `type` is `"multiple"`, this should be an array of strings.
+	 */
+	rootValue: Reactive<string | string[]>;
+
+	/** To determine if the `type` of the accordion is set to `single` or `multiple`. */
+	isRootTypeMultiple: boolean;
+};
 
 //
-// ITEM CONTEXT
+// TYPES FOR ITEM CONTEXT
 //
-
-const ITEM_CONTEXT_KEY = 'hawk-accordion-item-key';
 
 type AccordionItemContextInput = {
 	/**
@@ -120,15 +116,12 @@ type AccordionItemContextInput = {
 	 */
 	itemValue: string;
 
-	/** The reactive value used to identify the open or closed state of the item. */
-	itemState: Reactive<'open' | 'closed'>;
-
 	/**
 	 * Whether or not the accordion item is disabled. When disabled,
 	 * the accordion item cannot be interacted with.
 	 * @defaultValue `false`
 	 */
-	itemDisabled: boolean;
+	isItemDisabled: boolean;
 
 	/**
 	 * The identifier of the trigger component. Used for accessability between
@@ -143,7 +136,32 @@ type AccordionItemContextInput = {
 	contentId: string;
 };
 
-type AccordionItemContext = AccordionRootContext & AccordionItemContextInput;
+type AccordionItemBaseContextOutput = {
+	/** The reactive value used to identify the open or closed state of the item. */
+	isItemOpen: Reactive<boolean>;
+};
+
+type AccordionItemContextOutput = AccordionRootContextOutput &
+	Omit<AccordionItemContextInput, 'isItemOpen'> &
+	AccordionItemBaseContextOutput;
+
+//
+// GETTER FUNCTIONS FOR CONTEXT
+//
+
+export function useAccordionRoot(props: AccordionRootContextInput) {
+	const { rootValue: initialRootValue, ...restProps } = props;
+	const isRootTypeMultiple = Array.isArray(initialRootValue);
+
+	// eslint-disable-next-line prefer-const
+	let rootValue = $state<Reactive<string | string[]>>({ current: initialRootValue });
+
+	return setContext<AccordionRootContextOutput>(ROOT_CONTEXT_KEY, {
+		rootValue,
+		isRootTypeMultiple,
+		...restProps,
+	});
+}
 
 export function useAccordionItem(props: AccordionItemContextInput) {
 	if (!hasContext(ROOT_CONTEXT_KEY)) {
@@ -152,31 +170,39 @@ export function useAccordionItem(props: AccordionItemContextInput) {
 		);
 	}
 
-	const rootContext = getContext<AccordionRootContext>(ROOT_CONTEXT_KEY);
+	const { rootDefaultValue, ...restRootProps } =
+		getContext<AccordionRootContextOutput>(ROOT_CONTEXT_KEY);
 
-	return setContext<AccordionItemContext>(ITEM_CONTEXT_KEY, { ...rootContext, ...props });
+	const isItemValueSameAsRootDefaultValue =
+		props.itemValue === rootDefaultValue || rootDefaultValue.includes(props.itemValue);
+
+	// eslint-disable-next-line prefer-const
+	let isItemOpen = $state<Reactive<boolean>>({
+		current: isItemValueSameAsRootDefaultValue,
+	});
+
+	return setContext<AccordionItemContextOutput>(ITEM_CONTEXT_KEY, {
+		rootDefaultValue,
+		isItemOpen,
+		...restRootProps,
+		...props,
+	});
 }
-
-//
-// TRIGGER CONTEXT
-//
 
 export function useAccordionTrigger() {
 	if (!hasContext(ROOT_CONTEXT_KEY)) {
 		throw new Error(
 			'Context not found: This component is not an child of the Accordion.Root component.',
 		);
-	} else if (!hasContext(ITEM_CONTEXT_KEY)) {
+	}
+
+	if (!hasContext(ITEM_CONTEXT_KEY)) {
 		throw new Error(
 			'Context not found: This component is not an child of the Accordion.Item component.',
 		);
 	}
 
-	return getContext<AccordionItemContext>(ITEM_CONTEXT_KEY);
+	return getContext<AccordionItemContextOutput>(ITEM_CONTEXT_KEY);
 }
-
-//
-// CONTENT CONTEXT
-//
 
 export { useAccordionTrigger as useAccordionContent };

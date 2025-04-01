@@ -2,7 +2,7 @@
 	lang="ts"
 	module
 >
-	import type { Reactive, WithChild, WithElementRef } from '$lib/types';
+	import type { WithChild, WithElementRef } from '$lib/types';
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	type AccordionItemBaseAttributes = WithElementRef<
@@ -30,7 +30,7 @@
 
 <script lang="ts">
 	import { cn, createId } from '$lib/utils';
-	import { useAccordionItem } from './context';
+	import { useAccordionItem } from './context.svelte';
 
 	let {
 		ref = $bindable(null),
@@ -42,14 +42,9 @@
 		...restProps
 	}: AccordionItemProps = $props();
 
-	let itemState = $state<Reactive<'open' | 'closed'>>({
-		current: 'closed',
-	});
-
-	const { rootValue, rootDefaultValue, rootOnValueChange } = useAccordionItem({
-		itemDisabled: disabled,
+	const { rootValue, rootOnValueChange, isItemOpen } = useAccordionItem({
+		isItemDisabled: disabled,
 		itemValue: value,
-		itemState,
 		triggerId: createId(),
 		contentId: createId(),
 	});
@@ -62,29 +57,18 @@
 			className,
 		),
 		'data-disabled-item': disabled || undefined,
-		'data-state': itemState.current,
+		'data-open': isItemOpen.current,
 		...restProps,
 	});
 
-	let hasMounted = false;
-
 	$effect(() => {
-		const isValueSameAsRootDefaultValue =
-			value === rootDefaultValue || rootDefaultValue.includes(value);
-
 		const isValueSameAsRootValue =
 			value === rootValue.current || rootValue.current.includes(value);
 
-		// Default value should only be relevant on the initial render.
-		itemState.current =
-			(!hasMounted && isValueSameAsRootDefaultValue) || isValueSameAsRootValue
-				? 'open'
-				: 'closed';
-
-		if (!hasMounted) hasMounted = true;
+		isItemOpen.current = isValueSameAsRootValue;
 
 		// TypeScript can't infer the single or multiple types.
-		rootOnValueChange?.(itemState.current as any);
+		rootOnValueChange?.(rootValue.current as any);
 	});
 </script>
 

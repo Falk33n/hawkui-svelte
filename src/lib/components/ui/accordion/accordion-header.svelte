@@ -34,7 +34,7 @@
 	}: AccordionHeaderProps = $props();
 
 	const headerProps = $derived<HTMLAttributes<HTMLHeadingElement>>({
-		class: cn('flex', 'group-data-[state=open]:border-b', className),
+		class: cn('flex', 'group-data-[open=true]:border-b', className),
 		...restProps,
 	});
 </script>
