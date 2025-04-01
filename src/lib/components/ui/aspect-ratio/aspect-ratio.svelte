@@ -34,7 +34,7 @@
 		...restProps
 	}: AspectRatioProps = $props();
 
-	const rootProps = $derived({
+	const aspectRatioProps = $derived({
 		class: cn('relative w-full', className),
 		style: `padding-bottom: ${ratio / 100}px; ${style}`,
 		...restProps,
@@ -42,11 +42,11 @@
 </script>
 
 {#if child}
-	{@render child({ props: { ref, ...rootProps } })}
+	{@render child({ props: { ref, ...aspectRatioProps } })}
 {:else}
 	<div
 		bind:this={ref}
-		{...rootProps}
+		{...aspectRatioProps}
 	>
 		<div class="absolute inset-0">
 			{@render children?.()}
